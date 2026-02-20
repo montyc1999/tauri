@@ -39,7 +39,7 @@ use serde_with::skip_serializing_none;
 use url::Url;
 
 use std::{
-  collections::HashMap,
+  collections::{BTreeMap, HashMap},
   fmt::{self, Display},
   fs::read_to_string,
   path::PathBuf,
@@ -2128,20 +2128,20 @@ pub enum Csp {
   /// The entire CSP policy in a single text string.
   Policy(String),
   /// An object mapping a directive with its sources values as a list of strings.
-  DirectiveMap(HashMap<String, CspDirectiveSources>),
+  DirectiveMap(BTreeMap<String, CspDirectiveSources>),
 }
 
-impl From<HashMap<String, CspDirectiveSources>> for Csp {
-  fn from(map: HashMap<String, CspDirectiveSources>) -> Self {
+impl From<BTreeMap<String, CspDirectiveSources>> for Csp {
+  fn from(map: BTreeMap<String, CspDirectiveSources>) -> Self {
     Self::DirectiveMap(map)
   }
 }
 
-impl From<Csp> for HashMap<String, CspDirectiveSources> {
+impl From<Csp> for BTreeMap<String, CspDirectiveSources> {
   fn from(csp: Csp) -> Self {
     match csp {
       Csp::Policy(policy) => {
-        let mut map = HashMap::new();
+        let mut map = BTreeMap::new();
         for directive in policy.split(';') {
           let mut tokens = directive.trim().split(' ');
           if let Some(directive) = tokens.next() {
@@ -3843,7 +3843,7 @@ mod build {
         }
         Self::DirectiveMap(list) => {
           let map = map_lit(
-            quote! { ::std::collections::HashMap },
+            quote! { ::std::collections::BTreeMap },
             list,
             str_lit,
             identity,
