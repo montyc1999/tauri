@@ -337,7 +337,20 @@ impl<R: Runtime> AssetResolver<R> {
 /// A handle to the currently running application.
 ///
 /// This type implements [`Manager`] which allows for manipulation of global application items.
+#[cfg(any(not(feature = "cef"), feature = "wry"))]
 #[default_runtime(crate::Wry, wry)]
+#[derive(Debug)]
+pub struct AppHandle<R: Runtime> {
+  pub(crate) runtime_handle: R::Handle,
+  pub(crate) manager: Arc<AppManager<R>>,
+  event_loop: Arc<Mutex<EventLoop>>,
+}
+
+/// A handle to the currently running application.
+///
+/// This type implements [`Manager`] which allows for manipulation of global application items.
+#[cfg(all(feature = "cef", not(feature = "wry")))]
+#[default_runtime(crate::Cef, cef)]
 #[derive(Debug)]
 pub struct AppHandle<R: Runtime> {
   pub(crate) runtime_handle: R::Handle,
@@ -657,7 +670,21 @@ impl<R: Runtime> ManagerBase<R> for AppHandle<R> {
 /// The instance of the currently running application.
 ///
 /// This type implements [`Manager`] which allows for manipulation of global application items.
+#[cfg(any(not(feature = "cef"), feature = "wry"))]
 #[default_runtime(crate::Wry, wry)]
+pub struct App<R: Runtime> {
+  runtime: Option<R>,
+  setup: Option<SetupHook<R>>,
+  manager: Arc<AppManager<R>>,
+  handle: AppHandle<R>,
+  ran_setup: bool,
+}
+
+/// The instance of the currently running application.
+///
+/// This type implements [`Manager`] which allows for manipulation of global application items.
+#[cfg(all(feature = "cef", not(feature = "wry")))]
+#[default_runtime(crate::Cef, cef)]
 pub struct App<R: Runtime> {
   runtime: Option<R>,
   setup: Option<SetupHook<R>>,

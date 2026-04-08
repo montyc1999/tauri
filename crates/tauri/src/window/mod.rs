@@ -926,7 +926,27 @@ pub(crate) struct WindowMenu<R: Runtime> {
 ///
 /// This type also implements [`Manager`] which allows you to manage other windows attached to
 /// the same application.
+#[cfg(any(not(feature = "cef"), feature = "wry"))]
 #[default_runtime(crate::Wry, wry)]
+pub struct Window<R: Runtime> {
+  /// The window created by the runtime.
+  pub(crate) window: DetachedWindow<EventLoopMessage, R>,
+  /// The manager to associate this window with.
+  pub(crate) manager: Arc<AppManager<R>>,
+  pub(crate) app_handle: AppHandle<R>,
+  // The menu set for this window
+  #[cfg(desktop)]
+  pub(crate) menu: Arc<Mutex<Option<WindowMenu<R>>>>,
+  pub(crate) resources_table: Arc<Mutex<ResourceTable>>,
+}
+
+// TODO: expand these docs since this is a pretty important type
+/// A window managed by Tauri.
+///
+/// This type also implements [`Manager`] which allows you to manage other windows attached to
+/// the same application.
+#[cfg(all(feature = "cef", not(feature = "wry")))]
+#[default_runtime(crate::Cef, cef)]
 pub struct Window<R: Runtime> {
   /// The window created by the runtime.
   pub(crate) window: DetachedWindow<EventLoopMessage, R>,

@@ -377,7 +377,31 @@ impl<R: Runtime> Assets<R> for EmbeddedAssets {
 /// # Stability
 /// This is the output of the [`generate_context`] macro, and is not considered part of the stable API.
 /// Unless you know what you are doing and are prepared for this type to have breaking changes, do not create it yourself.
+#[cfg(any(not(feature = "cef"), feature = "wry"))]
 #[tauri_macros::default_runtime(Wry, wry)]
+pub struct Context<R: Runtime> {
+  pub(crate) config: Config,
+  #[cfg(dev)]
+  pub(crate) config_parent: Option<std::path::PathBuf>,
+  /// Asset provider.
+  pub assets: Box<dyn Assets<R>>,
+  pub(crate) default_window_icon: Option<image::Image<'static>>,
+  pub(crate) app_icon: Option<Vec<u8>>,
+  #[cfg(all(desktop, feature = "tray-icon"))]
+  pub(crate) tray_icon: Option<image::Image<'static>>,
+  pub(crate) package_info: PackageInfo,
+  pub(crate) pattern: Pattern,
+  pub(crate) runtime_authority: RuntimeAuthority,
+  pub(crate) plugin_global_api_scripts: Option<&'static [&'static str]>,
+}
+
+/// User supplied data required inside of a Tauri application.
+///
+/// # Stability
+/// This is the output of the [`generate_context`] macro, and is not considered part of the stable API.
+/// Unless you know what you are doing and are prepared for this type to have breaking changes, do not create it yourself.
+#[cfg(all(feature = "cef", not(feature = "wry")))]
+#[tauri_macros::default_runtime(crate::Cef, cef)]
 pub struct Context<R: Runtime> {
   pub(crate) config: Config,
   #[cfg(dev)]

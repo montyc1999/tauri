@@ -200,6 +200,7 @@ wrap_resource_handler! {
         let callback = ThreadSafe(callback.clone());
         let response_store = ThreadSafe(self.response.clone());
         let initialization_scripts = self.initialization_scripts.clone();
+        let url_clone = url.clone();
         let responder = Box::new(move |response: http::Response<Cow<'static, [u8]>>| {
           // Check if this is an HTML response that needs script injection
           let content_type = response.headers().get(CONTENT_TYPE);
@@ -212,27 +213,30 @@ wrap_resource_handler! {
           let body_bytes = body.into_owned();
 
           let modified_body = if is_html {
+            println!("Injecting scripts into HTML response for URL: {}", &url_clone);
             inject_scripts_into_html_body(&body_bytes, &initialization_scripts)
               .unwrap_or(body_bytes)
           } else {
             body_bytes
           };
 
-          let mut response = http::Response::from_parts(parts, Cursor::new(modified_body));
+          let response = http::Response::from_parts(parts, Cursor::new(modified_body));
+
+          // let mut response = http::Response::from_parts(parts, Cursor::new(modified_body));
 
 
-          let csp = response
-            .headers_mut()
-            .get_mut(CONTENT_SECURITY_POLICY);
+          // let csp = response
+          //   .headers_mut()
+          //   .get_mut(CONTENT_SECURITY_POLICY);
 
-          if let Some(csp) = csp {
-            let csp_string = csp.to_str().unwrap().to_string();
-            let new_csp = csp_inject_initialization_scripts_hashes(
-              csp_string,
-              &initialization_scripts,
-            );
-            *csp = HeaderValue::from_str(&new_csp).unwrap();
-          }
+          // if let Some(csp) = csp {
+          //   let csp_string = csp.to_str().unwrap().to_string();
+          //   let new_csp = csp_inject_initialization_scripts_hashes(
+          //     csp_string,
+          //     &initialization_scripts,
+          //   );
+          //   *csp = HeaderValue::from_str(&new_csp).unwrap();
+          // }
 
 
           response_store.into_owned().borrow_mut().replace(response);

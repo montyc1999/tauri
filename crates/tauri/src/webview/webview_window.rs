@@ -1399,7 +1399,17 @@ impl<M: Manager<crate::Wry>> WebviewWindowBuilder<'_, crate::Wry, M> {
 }
 
 /// A type that wraps a [`Window`] together with a [`Webview`].
+#[cfg(any(not(feature = "cef"), feature = "wry"))]
 #[default_runtime(crate::Wry, wry)]
+#[derive(Debug)]
+pub struct WebviewWindow<R: Runtime> {
+  pub(crate) window: Window<R>,
+  pub(crate) webview: Webview<R>,
+}
+
+/// A type that wraps a [`Window`] together with a [`Webview`].
+#[cfg(all(feature = "cef", not(feature = "wry")))]
+#[default_runtime(crate::Cef, cef)]
 #[derive(Debug)]
 pub struct WebviewWindow<R: Runtime> {
   pub(crate) window: Window<R>,

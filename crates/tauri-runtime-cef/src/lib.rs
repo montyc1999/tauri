@@ -1968,9 +1968,13 @@ impl<T: UserEvent> CefRuntime<T> {
       #[cfg(not(feature = "sandbox"))]
       let sandbox = ();
 
+      println!("loading cef library");
+
       let loader =
         cef::library_loader::LibraryLoader::new(&std::env::current_exe().unwrap(), is_helper);
       assert!(loader.load());
+
+      println!("loaded cef library");
 
       if !is_helper {
         let event_tx_ = event_tx.clone();
@@ -2030,6 +2034,10 @@ impl<T: UserEvent> CefRuntime<T> {
     }
     command_line_args.push(("--enable-media-stream".to_string(), None));
 
+    // avoid keychain allow prompt
+    #[cfg(target_os = "macos")]
+    command_line_args.push(("--use-mock-keychain".to_string(), None));
+
     let mut app = cef_impl::TauriApp::new(
       cef_context.clone(),
       runtime_args.custom_schemes,
@@ -2055,11 +2063,30 @@ impl<T: UserEvent> CefRuntime<T> {
       std::process::exit(0);
     }
 
+    println!("is_browser_process: {}", is_browser_process);
+
     let settings = cef::Settings {
       no_sandbox: !cfg!(feature = "sandbox") as i32,
       cache_path: cache_path.to_string_lossy().to_string().as_str().into(),
+      framework_dir_path: std::env::current_exe()
+        .unwrap()
+        .ancestors()
+        .nth(2)
+        .unwrap()
+        .join("Frameworks")
+        .join("Chromium Embedded Framework.framework")
+        .to_str()
+        .map(CefString::from)
+        .unwrap(),
       ..Default::default()
     };
+    println!(
+      "initializing cef with no_sandbox: {:?}, framework path: {}, args: {:?}",
+      settings.no_sandbox,
+      settings.framework_dir_path.to_string(),
+      args.as_main_args()
+    );
+
     assert_eq!(
       cef::initialize(
         Some(args.as_main_args()),
@@ -2069,6 +2096,8 @@ impl<T: UserEvent> CefRuntime<T> {
       ),
       1
     );
+
+    println!("initialized cef");
 
     let main_thread_id = thread::current().id();
     let context = RuntimeContext {

@@ -53,3 +53,6 @@ default = ["sandbox"]
 devtools = []
 macos-private-api = ["tauri-runtime/macos-private-api"]
 sandbox = ["cef/sandbox"]
+
+[lints.rust]
+unused_unsafe = "allow"
